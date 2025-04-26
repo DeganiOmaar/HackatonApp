@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1095175289735",
+    "project_id": "pfe-app-e5e75",
+    "storage_bucket": "pfe-app-e5e75.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1095175289735:android:32cefe1c71ac18a2683122",
+        "android_client_info": {
+          "package_name": "com.example.robotic_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB22OJ4AP3c_VmMDEN1G89g0joTo-1INBY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
