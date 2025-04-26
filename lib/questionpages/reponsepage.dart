@@ -72,8 +72,9 @@ class _ResponsePageState extends State<ResponsePage> {
         .update({'rating': starCount});
   }
 
-  void _showRatingDialog(String responseId, int currentRating) {
+void _showRatingDialog(String responseId, int currentRating) {
   int selected = currentRating;
+
   showDialog(
     context: context,
     builder: (dialogContext) {
@@ -81,16 +82,19 @@ class _ResponsePageState extends State<ResponsePage> {
         title: const Text('Noter cette réponse'),
         content: StatefulBuilder(
           builder: (ctx, setState) {
-            return Row(
-              mainAxisAlignment: MainAxisAlignment.center,
+            return Wrap(
+              alignment: WrapAlignment.center,
+              spacing: 4,       // espace horizontal entre les étoiles
+              runSpacing: 4,    // si besoin de passer à la ligne
               children: List.generate(5, (i) {
                 final idx = i + 1;
-                return IconButton(
-                  icon: Icon(
+                return GestureDetector(
+                  onTap: () => setState(() => selected = idx),
+                  child: Icon(
                     idx <= selected ? Icons.star : Icons.star_border,
                     color: Colors.amber,
+                    size: 28,        // taille de l’étoile
                   ),
-                  onPressed: () => setState(() => selected = idx),
                 );
               }),
             );
@@ -104,7 +108,7 @@ class _ResponsePageState extends State<ResponsePage> {
           ElevatedButton(
             onPressed: () async {
               await _setRating(responseId, selected);
-              Navigator.of(dialogContext).pop();  // <— ferme bien le dialog
+              Navigator.of(dialogContext).pop();
               QuickAlert.show(
                 context: context,
                 type: QuickAlertType.success,
@@ -135,14 +139,13 @@ class _ResponsePageState extends State<ResponsePage> {
         qTimestamp != null ? timeago.format(qTimestamp, locale: 'fr') : '';
 
     return Scaffold(
-      appBar: AppBar(
+       appBar: AppBar(
         backgroundColor: Colors.white,
         title: const Text(
           "Réponses",
           style: TextStyle(fontWeight: FontWeight.w700, fontSize: 19),
         ),
         centerTitle: true,
-        elevation: 1,
       ),
       backgroundColor: Colors.white,
       body: Column(
