@@ -33,7 +33,6 @@ class _ResponsePageState extends State<ResponsePage> {
       );
       return;
     }
-
     setState(() => _isSending = true);
     try {
       final user = FirebaseAuth.instance.currentUser!;
@@ -45,8 +44,8 @@ class _ResponsePageState extends State<ResponsePage> {
         'response': text,
         'userId': user.uid,
         'timestamp': FieldValue.serverTimestamp(),
+        'rating': 0,
       });
-
       QuickAlert.show(
         context: context,
         type: QuickAlertType.success,
@@ -63,6 +62,62 @@ class _ResponsePageState extends State<ResponsePage> {
       setState(() => _isSending = false);
     }
   }
+
+  Future<void> _setRating(String responseId, int starCount) async {
+    await FirebaseFirestore.instance
+        .collection('question')
+        .doc(widget.questionId)
+        .collection('responses')
+        .doc(responseId)
+        .update({'rating': starCount});
+  }
+
+  void _showRatingDialog(String responseId, int currentRating) {
+  int selected = currentRating;
+  showDialog(
+    context: context,
+    builder: (dialogContext) {
+      return AlertDialog(
+        title: const Text('Noter cette réponse'),
+        content: StatefulBuilder(
+          builder: (ctx, setState) {
+            return Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: List.generate(5, (i) {
+                final idx = i + 1;
+                return IconButton(
+                  icon: Icon(
+                    idx <= selected ? Icons.star : Icons.star_border,
+                    color: Colors.amber,
+                  ),
+                  onPressed: () => setState(() => selected = idx),
+                );
+              }),
+            );
+          },
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('Annuler'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              await _setRating(responseId, selected);
+              Navigator.of(dialogContext).pop();  // <— ferme bien le dialog
+              QuickAlert.show(
+                context: context,
+                type: QuickAlertType.success,
+                text: 'Merci pour votre avis !',
+              );
+            },
+            child: const Text('Envoyer'),
+          ),
+        ],
+      );
+    },
+  );
+}
 
   @override
   void dispose() {
@@ -81,17 +136,18 @@ class _ResponsePageState extends State<ResponsePage> {
 
     return Scaffold(
       appBar: AppBar(
-         backgroundColor: Colors.white,
+        backgroundColor: Colors.white,
         title: const Text(
-          "Reponses",
+          "Réponses",
           style: TextStyle(fontWeight: FontWeight.w700, fontSize: 19),
         ),
         centerTitle: true,
+        elevation: 1,
       ),
       backgroundColor: Colors.white,
       body: Column(
         children: [
-          // --- Question card ---
+          // Question
           Card(
             color: Colors.white,
             margin: const EdgeInsets.all(12),
@@ -150,12 +206,11 @@ class _ResponsePageState extends State<ResponsePage> {
                           if (qRelative.isNotEmpty)
                             Text(
                               qRelative,
-                              style: TextStyle(
+                              style: const TextStyle(
                                   fontSize: 12, color: Colors.black87),
                             ),
                         ],
                       ),
-
                       if (qImageUrl.isNotEmpty) ...[
                         const SizedBox(height: 12),
                         ClipRRect(
@@ -168,7 +223,6 @@ class _ResponsePageState extends State<ResponsePage> {
                           ),
                         ),
                       ],
-
                       const SizedBox(height: 12),
                       Text(
                         qText,
@@ -184,12 +238,14 @@ class _ResponsePageState extends State<ResponsePage> {
             ),
           ),
 
+          // Responses
           Expanded(
             child: StreamBuilder<QuerySnapshot>(
               stream: FirebaseFirestore.instance
                   .collection('question')
                   .doc(widget.questionId)
                   .collection('responses')
+                  .orderBy('timestamp')
                   .snapshots(),
               builder: (context, snap) {
                 if (snap.hasError) {
@@ -206,13 +262,15 @@ class _ResponsePageState extends State<ResponsePage> {
                   padding: const EdgeInsets.symmetric(vertical: 8),
                   itemCount: docs.length,
                   itemBuilder: (context, i) {
-                    final r = docs[i].data()! as Map<String, dynamic>;
+                    final docResp = docs[i];
+                    final r = docResp.data()! as Map<String, dynamic>;
                     final respText = r['response'] as String? ?? '';
                     final respTs = (r['timestamp'] as Timestamp?)?.toDate();
                     final respRel = respTs != null
                         ? timeago.format(respTs, locale: 'fr')
                         : '';
                     final respUserId = r['userId'] as String;
+                    final rating = r['rating'] as int? ?? 0;
 
                     return FutureBuilder<
                         DocumentSnapshot<Map<String, dynamic>>>(
@@ -226,11 +284,13 @@ class _ResponsePageState extends State<ResponsePage> {
                           return const Padding(
                             padding: EdgeInsets.symmetric(vertical: 8),
                             child: Center(
-                                child: SizedBox(
-                                    width: 24,
-                                    height: 24,
-                                    child: CircularProgressIndicator(
-                                        strokeWidth: 2))),
+                              child: SizedBox(
+                                width: 24,
+                                height: 24,
+                                child: CircularProgressIndicator(
+                                    strokeWidth: 2),
+                              ),
+                            ),
                           );
                         }
                         final u = usnap.data!.data()!;
@@ -248,59 +308,90 @@ class _ResponsePageState extends State<ResponsePage> {
                             elevation: 1,
                             child: Padding(
                               padding: const EdgeInsets.all(12),
-                              child: Row(
+                              child: Column(
                                 crossAxisAlignment:
                                     CrossAxisAlignment.start,
                                 children: [
-                                  CircleAvatar(
-                                    radius: 18,
-                                    backgroundColor: Colors.white,
-                                    backgroundImage: avatar.isNotEmpty
-                                        ? NetworkImage(avatar)
-                                        : null,
-                                    child: avatar.isEmpty
-                                        ? SvgPicture.asset(
-                                            'assets/img/avtr.svg',
-                                            width: 28,
-                                            height: 28,
-                                          )
-                                        : null,
-                                  ),
-                                  const SizedBox(width: 10),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Row(
+                                  Row(
+                                    children: [
+                                      CircleAvatar(
+                                        radius: 18,
+                                        backgroundColor: Colors.white,
+                                        backgroundImage: avatar.isNotEmpty
+                                            ? NetworkImage(avatar)
+                                            : null,
+                                        child: avatar.isEmpty
+                                            ? SvgPicture.asset(
+                                                'assets/img/avtr.svg',
+                                                width: 28,
+                                                height: 28,
+                                              )
+                                            : null,
+                                      ),
+                                      const SizedBox(width: 10),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
                                           children: [
-                                            Expanded(
-                                              child: Text(
-                                                name,
-                                                style: const TextStyle(
-                                                    fontWeight:
-                                                        FontWeight.bold),
-                                              ),
+                                            Row(
+                                              children: [
+                                                Expanded(
+                                                  child: Text(
+                                                    name,
+                                                    style: const TextStyle(
+                                                        fontWeight:
+                                                            FontWeight.bold),
+                                                  ),
+                                                ),
+                                                Text(
+                                                  respRel,
+                                                  style: const TextStyle(
+                                                      fontSize: 11,
+                                                      color:
+                                                          Colors.black87),
+                                                ),
+                                              ],
                                             ),
-                                            if (respRel.isNotEmpty)
-                                              Text(
-                                                respRel,
-                                                style: TextStyle(
-                                                    fontSize: 11,
-                                                    color:
-                                                        Colors.black87),
-                                              ),
+                                            const SizedBox(height: 6),
+                                            Text(
+                                              respText,
+                                              style: const TextStyle(
+                                                  fontSize: 14),
+                                            ),
                                           ],
                                         ),
-                                        const SizedBox(height: 6),
-                                        Text(
-                                          respText,
-                                          style: const TextStyle(
-                                              fontSize: 14),
+                                      ),
+                                    ],
+                                  ),
+
+                                  // Réagir button & current rating
+                                  Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.end,
+                                    children: [
+                                      if (rating > 0) ...[
+                                        // display rating stars under time
+                                        Row(
+                                          children: List.generate(5, (idx) {
+                                            return Icon(
+                                              idx < rating
+                                                  ? Icons.star
+                                                  : Icons.star_border,
+                                              color: Colors.amber,
+                                              size: 16,
+                                            );
+                                          }),
                                         ),
+                                        const SizedBox(width: 8),
                                       ],
-                                    ),
-                                  )
+                                      TextButton(
+                                        onPressed: () => _showRatingDialog(
+                                            docResp.id, rating),
+                                        child: const Text('Réagir'),
+                                      ),
+                                    ],
+                                  ),
                                 ],
                               ),
                             ),
@@ -315,7 +406,8 @@ class _ResponsePageState extends State<ResponsePage> {
           ),
         ],
       ),
-      // --- Input & send ---
+
+      // Input & send
       bottomNavigationBar: SafeArea(
         child: Padding(
           padding:

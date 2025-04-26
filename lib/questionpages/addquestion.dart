@@ -46,20 +46,19 @@ class _AddQuestionPageState extends State<AddQuestionPage> {
     try {
       // Récupérer l'utilisateur
       final user = FirebaseAuth.instance.currentUser!;
-      final userDoc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(user.uid)
-          .get();
+      final userDoc =
+          await FirebaseFirestore.instance
+              .collection('users')
+              .doc(user.uid)
+              .get();
       final nom = userDoc['nom'] as String;
       final prenom = userDoc['prenom'] as String;
 
-
-      final storageRef = FirebaseStorage.instance
-          .ref()
-          .child('questionImages/${DateTime.now().millisecondsSinceEpoch}');
+      final storageRef = FirebaseStorage.instance.ref().child(
+        'questionImages/${DateTime.now().millisecondsSinceEpoch}',
+      );
       await storageRef.putFile(_pickedImage!);
       final imageUrl = await storageRef.getDownloadURL();
-
 
       await FirebaseFirestore.instance.collection('question').add({
         'nom': nom,
@@ -117,39 +116,40 @@ class _AddQuestionPageState extends State<AddQuestionPage> {
           child: Column(
             children: [
               Gap(30),
-             Container(
-  decoration: BoxDecoration(
-    border: Border.all(color: mainColor, width: 2),
-    borderRadius: BorderRadius.circular(16),
-  ),
-  padding: const EdgeInsets.all(12),
-  child: GestureDetector(
-    onTap: _pickImage,
-    child: SizedBox(
-      height: 220,
-      child: _pickedImage == null
-          // si pas d'image, on affiche une icône de chargement centrée
-          ? Center(
-              child: Icon(
-                Icons.cloud_upload,
-                color: mainColor,
-                size: 40,
+              Container(
+                decoration: BoxDecoration(
+                  border: Border.all(color: mainColor, width: 2),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                padding: const EdgeInsets.all(12),
+                child: GestureDetector(
+                  onTap: _pickImage,
+                  child: SizedBox(
+                    height: 220,
+                    child:
+                        _pickedImage == null
+                            // si pas d'image, on affiche une icône de chargement centrée
+                            ? Center(
+                              child: Icon(
+                                Icons.cloud_upload,
+                                color: mainColor,
+                                size: 40,
+                              ),
+                            )
+                            // sinon on affiche l'image sélectionnée, couvrant tout l'espace
+                            : ClipRRect(
+                              borderRadius: BorderRadius.circular(12),
+                              child: Image.file(
+                                _pickedImage!,
+                                width: double.infinity,
+                                height: double.infinity,
+                                fit: BoxFit.cover,
+                              ),
+                            ),
+                  ),
+                ),
               ),
-            )
-          // sinon on affiche l'image sélectionnée, couvrant tout l'espace
-          : ClipRRect(
-              borderRadius: BorderRadius.circular(12),
-              child: Image.file(
-                _pickedImage!,
-                width: double.infinity,
-                height: double.infinity,
-                fit: BoxFit.cover,
-              ),
-            ),
-    ),
-  ),
-),
-const SizedBox(height: 20),
+              const SizedBox(height: 20),
 
               // Question input container
               Container(
@@ -163,8 +163,10 @@ const SizedBox(height: 20),
                   children: [
                     const Text(
                       'Ajouter Votre question',
-                      style:
-                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     const SizedBox(height: 8),
                     TextFormField(
@@ -179,7 +181,9 @@ const SizedBox(height: 20),
                         filled: true,
                         fillColor: Colors.white,
                         contentPadding: const EdgeInsets.symmetric(
-                            vertical: 12, horizontal: 12),
+                          vertical: 12,
+                          horizontal: 12,
+                        ),
                       ),
                     ),
                   ],
@@ -187,7 +191,6 @@ const SizedBox(height: 20),
               ),
               Spacer(),
 
-             
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
@@ -195,19 +198,24 @@ const SizedBox(height: 20),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: mainColor,
                     shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(30)),
+                      borderRadius: BorderRadius.circular(30),
+                    ),
                     padding: const EdgeInsets.symmetric(vertical: 16),
                   ),
-                  child: _isLoading
-                      ? LoadingAnimationWidget.staggeredDotsWave(
-                          color: Colors.white, size: 32)
-                      : const Text(
-                          'Add your question',
-                          style: TextStyle(
+                  child:
+                      _isLoading
+                          ? LoadingAnimationWidget.staggeredDotsWave(
+                            color: Colors.white,
+                            size: 32,
+                          )
+                          : const Text(
+                            'Ajouter votre question',
+                            style: TextStyle(
                               color: Colors.white,
                               fontSize: 16,
-                              fontWeight: FontWeight.bold),
-                        ),
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                 ),
               ),
               const Gap(20),

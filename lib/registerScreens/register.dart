@@ -11,7 +11,6 @@ import 'package:get/get.dart';
 import 'package:quickalert/quickalert.dart';
 import 'package:robotic_app/registerScreens/login.dart';
 import 'package:robotic_app/registerScreens/registertextfield.dart';
-import 'package:robotic_app/screens/home_page.dart';
 import 'package:robotic_app/screens/screens.dart';
 import '../../shared/colors.dart';
 
@@ -32,6 +31,7 @@ class _RegisterPageState extends State<RegisterPage> {
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
   final confirmPasswordController = TextEditingController();
+  final locationController = TextEditingController();
 
   File? selectedImage;
   String? selectedRole;
@@ -80,6 +80,7 @@ class _RegisterPageState extends State<RegisterPage> {
             "prenom": prenomController.text.trim(),
             "email": emailController.text.trim(),
             "password": passwordController.text,
+            "localisation" : locationController.text,
             "uid": cred.user!.uid,
             "image": imgUrl,
             "role": selectedRole,
@@ -212,8 +213,6 @@ class _RegisterPageState extends State<RegisterPage> {
                   ],
                 ),
                 const SizedBox(height: 30),
-
-                // -- DROPDOWN ROLE
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -244,8 +243,6 @@ class _RegisterPageState extends State<RegisterPage> {
                   ),
                 ),
                 const SizedBox(height: 30),
-
-                // -- EMAIL
                 RegistrationTextField(
                   icon: CupertinoIcons.mail,
                   text: "Email",
@@ -257,6 +254,15 @@ class _RegisterPageState extends State<RegisterPage> {
                               )
                               ? null
                               : "Entrez un email valide",
+                ),
+                const SizedBox(height: 30),
+                  RegistrationTextField(
+                  icon: CupertinoIcons.map_pin,
+                  text: "Location",
+                  controller: locationController,
+                  validator:
+                            (v) =>
+                                v!.isEmpty ? "Entrez un localisation valide" : null,
                 ),
                 const SizedBox(height: 30),
 

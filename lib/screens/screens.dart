@@ -4,6 +4,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:google_nav_bar/google_nav_bar.dart';
 import 'package:line_awesome_flutter/line_awesome_flutter.dart';
+import 'package:robotic_app/analyse_maladie/screens/analyze_image_screen.dart';
+import 'package:robotic_app/messagesscreens/listuser.dart';
 import 'package:robotic_app/questionpages/addquestion.dart';
 import 'package:robotic_app/questionpages/questionlist.dart';
 import 'package:robotic_app/screens/home_page.dart';
@@ -94,9 +96,19 @@ class _ScreensState extends State<Screens> {
                 });
               },
               tabs: [
-                GButton(icon: LineAwesomeIcons.question_circle, text: 'Question'),
+                GButton(
+                  icon: LineAwesomeIcons.question_circle,
+                  text: 'Question',
+                ),
+                GButton(
+                  icon: LineAwesomeIcons.person_booth_solid,
+                  text: 'Agriculteur',
+                ),
 
-                const GButton(icon: Icons.question_answer, text: 'Add Question'),
+                const GButton(
+                  icon: Icons.image_aspect_ratio,
+                  text: 'Images',
+                ),
 
                 const GButton(
                   icon: CupertinoIcons.person_alt_circle,
@@ -109,7 +121,12 @@ class _ScreensState extends State<Screens> {
             onPageChanged: (index) {},
             physics: const NeverScrollableScrollPhysics(),
             controller: _pageController,
-            children: [const QuestionsListPage(), const AddQuestionPage(), const Profile()],
+            children: [
+              const QuestionsListPage(),
+              const UsersListPage(),
+              const AnalyzeImageScreen(),
+              const Profile(),
+            ],
           ),
         );
   }

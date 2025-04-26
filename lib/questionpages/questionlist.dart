@@ -1,6 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:robotic_app/registerScreens/reponsepage.dart';
+import 'package:get/get.dart';
+import 'package:line_awesome_flutter/line_awesome_flutter.dart';
+import 'package:loading_animation_widget/loading_animation_widget.dart';
+import 'package:robotic_app/questionpages/addquestion.dart';
+import 'package:robotic_app/questionpages/reponsepage.dart';
 import 'package:timeago/timeago.dart' as timeago;
 
 class QuestionsListPage extends StatelessWidget {
@@ -11,6 +15,14 @@ class QuestionsListPage extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
+        actions: [
+          IconButton(
+            onPressed: () async {
+              Get.to(() => AddQuestionPage());
+            },
+            icon: Icon(LineAwesomeIcons.question_circle),
+          ),
+        ],
         backgroundColor: Colors.white,
         title: const Text(
           "Liste des questions",
@@ -19,16 +31,24 @@ class QuestionsListPage extends StatelessWidget {
         centerTitle: true,
       ),
       body: StreamBuilder<QuerySnapshot>(
-        stream: FirebaseFirestore.instance
-            .collection('question')
-            .orderBy('timestamp', descending: true)
-            .snapshots(),
+        stream:
+            FirebaseFirestore.instance
+                .collection('question')
+                .orderBy('timestamp', descending: true)
+                .snapshots(),
         builder: (context, snap) {
           if (snap.hasError) {
             return Center(child: Text('Erreur : ${snap.error}'));
           }
           if (!snap.hasData) {
-            return const Center(child: CircularProgressIndicator());
+            return Center(
+              child: LoadingAnimationWidget.discreteCircle(
+                size: 32,
+                color: const Color.fromARGB(255, 16, 16, 16),
+                secondRingColor: Colors.indigo,
+                thirdRingColor: Colors.pink.shade400,
+              ),
+            );
           }
           final docs = snap.data!.docs;
           if (docs.isEmpty) {
@@ -45,15 +65,17 @@ class QuestionsListPage extends StatelessWidget {
               final questionText = q['question'] as String? ?? '';
               final questionImageUrl = q['image'] as String? ?? '';
               final timestamp = (q['timestamp'] as Timestamp?)?.toDate();
-              final relative = timestamp != null
-                  ? timeago.format(timestamp, locale: 'fr')
-                  : '';
+              final relative =
+                  timestamp != null
+                      ? timeago.format(timestamp, locale: 'fr')
+                      : '';
 
               return FutureBuilder<DocumentSnapshot<Map<String, dynamic>>>(
-                future: FirebaseFirestore.instance
-                    .collection('users')
-                    .doc(userId)
-                    .get(),
+                future:
+                    FirebaseFirestore.instance
+                        .collection('users')
+                        .doc(userId)
+                        .get(),
                 builder: (context, userSnap) {
                   if (userSnap.connectionState == ConnectionState.waiting) {
                     return const SizedBox(
@@ -76,16 +98,19 @@ class QuestionsListPage extends StatelessWidget {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (_) => ResponsePage(
-                            questionId: doc.id,
-                            questionData: q,
-                          ),
+                          builder:
+                              (_) => ResponsePage(
+                                questionId: doc.id,
+                                questionData: q,
+                              ),
                         ),
                       );
                     },
                     child: Padding(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 8),
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -94,10 +119,13 @@ class QuestionsListPage extends StatelessWidget {
                             children: [
                               CircleAvatar(
                                 radius: 24,
-                                backgroundImage: avatarUrl.isNotEmpty
-                                    ? NetworkImage(avatarUrl)
-                                    : const AssetImage('assets/img/avtr.svg')
-                                        as ImageProvider,
+                                backgroundImage:
+                                    avatarUrl.isNotEmpty
+                                        ? NetworkImage(avatarUrl)
+                                        : const AssetImage(
+                                              'assets/img/avtr.svg',
+                                            )
+                                            as ImageProvider,
                               ),
                               const SizedBox(width: 12),
                               Expanded(
@@ -140,12 +168,8 @@ class QuestionsListPage extends StatelessWidget {
                           // Texte de la question
                           Text(
                             questionText,
-                            style: const TextStyle(
-                              fontSize: 14,
-                              height: 1.4,
-                            ),
+                            style: const TextStyle(fontSize: 14, height: 1.4),
                           ),
-
                         ],
                       ),
                     ),
