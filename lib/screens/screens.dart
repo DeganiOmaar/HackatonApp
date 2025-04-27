@@ -5,9 +5,11 @@ import 'package:flutter/material.dart';
 import 'package:google_nav_bar/google_nav_bar.dart';
 import 'package:line_awesome_flutter/line_awesome_flutter.dart';
 import 'package:robotic_app/analyse_maladie/screens/analyze_image_screen.dart';
+import 'package:robotic_app/community_feed/community_feed_screen.dart';
 import 'package:robotic_app/messagesscreens/listuser.dart';
 import 'package:robotic_app/questionpages/addquestion.dart';
 import 'package:robotic_app/questionpages/questionlist.dart';
+import 'package:robotic_app/recherche_agriculteur/search_agriculteur_screen.dart';
 import 'package:robotic_app/screens/home_page.dart';
 import 'package:robotic_app/shared/colors.dart';
 
@@ -109,6 +111,14 @@ class _ScreensState extends State<Screens> {
                   icon: Icons.image_aspect_ratio,
                   text: 'Images',
                 ),
+                 const GButton(
+                  icon: CupertinoIcons.search_circle,
+                  text: 'Recherche',
+                ),
+                 const GButton(
+                  icon: CupertinoIcons.list_bullet,
+                  text: ' Feed',
+                ),
 
                 const GButton(
                   icon: CupertinoIcons.person_alt_circle,
@@ -125,7 +135,13 @@ class _ScreensState extends State<Screens> {
               const QuestionsListPage(),
               const UsersListPage(),
               const AnalyzeImageScreen(),
+              const SearchAgriculteurScreen(),
+              CommunityFeedScreen(
+                userRole: userData['role'],
+                userLocalisation: userData['localisation'],
+              ),
               const Profile(),
+              
             ],
           ),
         );

@@ -9,7 +9,9 @@ import 'package:robotic_app/screens/home_page.dart';
 import 'package:robotic_app/screens/screens.dart';
 import 'package:robotic_app/testpage.dart';
 import 'firebase_options.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'registerScreens/login.dart';
+import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -17,6 +19,13 @@ void main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
   runApp(MyApp());
+}
+
+Future<void> setup() async{
+  await dotenv.load(
+    fileName: ".env"
+  );
+  MapboxOptions.setAccessToken(dotenv.env["MAPBOX_ACCES_TOKEN"]!,);
 }
 
 class MyApp extends StatelessWidget {
