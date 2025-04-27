@@ -6,7 +6,7 @@ import 'package:robotic_app/community_feed/add_case_screen.dart';
 import 'package:robotic_app/community_feed/case_model.dart';
 import 'package:robotic_app/community_feed/case_service.dart';
 import 'package:robotic_app/community_feed/statisticpage.dart';
-import 'package:robotic_app/open_native_map.dart';   // <-- nouvelle page
+import 'package:robotic_app/open_native_map.dart';
 
 class CommunityFeedScreen extends StatefulWidget {
   final String userRole;
@@ -47,8 +47,7 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
       var marks = await placemarkFromCoordinates(pos.latitude, pos.longitude);
       if (marks.isNotEmpty) {
         setState(() {
-          detectedCity =
-              marks.first.locality ?? marks.first.subAdministrativeArea;
+          detectedCity = marks.first.locality ?? marks.first.subAdministrativeArea;
         });
       }
     } catch (_) {}
@@ -60,9 +59,12 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
       backgroundColor: Colors.white,
       appBar: AppBar(
         actions: [
-          IconButton(onPressed: (){
-            Get.to(()=>StatisticsPage());
-          }, icon: Icon(Icons.analytics_outlined))
+          IconButton(
+            onPressed: () {
+              Get.to(() => StatisticsPage());
+            },
+            icon: const Icon(Icons.analytics_outlined),
+          )
         ],
         backgroundColor: Colors.white,
         title: const Text(
@@ -97,22 +99,54 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Image
-                    ClipRRect(
-                      borderRadius: const BorderRadius.only(
-                        topLeft: Radius.circular(15),
-                        topRight: Radius.circular(15),
-                      ),
-                      child: Image.network(
-                        cas.imageUrl,
-                        width: double.infinity,
-                        height: 200,
-                        fit: BoxFit.cover,
-                        loadingBuilder: (_, child, progress) =>
-                            progress == null ? child : const Center(child: CircularProgressIndicator()),
-                        errorBuilder: (_, __, ___) =>
-                            const Center(child: Icon(Icons.error)),
-                      ),
+                    Stack(
+                      children: [
+                        // Image
+                        ClipRRect(
+                          borderRadius: const BorderRadius.only(
+                            topLeft: Radius.circular(15),
+                            topRight: Radius.circular(15),
+                          ),
+                          child: Image.network(
+                            cas.imageUrl,
+                            width: double.infinity,
+                            height: 200,
+                            fit: BoxFit.cover,
+                            loadingBuilder: (_, child, progress) =>
+                                progress == null ? child : const Center(child: CircularProgressIndicator()),
+                            errorBuilder: (_, __, ___) =>
+                                const Center(child: Icon(Icons.error)),
+                          ),
+                        ),
+                        // Coeur sur l'image
+                        Positioned(
+                          top: 10,
+                          right: 10,
+                          child: FutureBuilder<bool>(
+                            future: CaseService.hasLiked(cas.id),
+                            builder: (context, likeSnapshot) {
+                              final hasLiked = likeSnapshot.data ?? false;
+                              return IconButton(
+                                icon: Icon(
+                                  hasLiked ? Icons.favorite : Icons.favorite_border,
+                                  color: hasLiked ? Colors.red : Colors.grey,
+                                  size: 30,
+                                ),
+                                onPressed: () async {
+                                  try {
+                                    await CaseService.toggleLike(cas.id);
+                                    setState(() {}); // Refresh après clic
+                                  } catch (e) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(content: Text('Erreur lors du like')),
+                                    );
+                                  }
+                                },
+                              );
+                            },
+                          ),
+                        ),
+                      ],
                     ),
                     // Infos
                     Padding(
@@ -139,27 +173,27 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
                                 ),
                               ),
                               IconButton(
-  icon: const Icon(Icons.location_on),
-  onPressed: () async {
-    if (cas.latitude != null && cas.longitude != null) {
-      try {
-        await openNativeMap(
-          latitude: cas.latitude!,
-          longitude: cas.longitude!,
-          label: cas.localisation,
-        );
-      } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.toString())),
-        );
-      }
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Coordonnées GPS indisponibles.')),
-      );
-    }
-  },
-)
+                                icon: const Icon(Icons.location_on),
+                                onPressed: () async {
+                                  if (cas.latitude != null && cas.longitude != null) {
+                                    try {
+                                      await openNativeMap(
+                                        latitude: cas.latitude!,
+                                        longitude: cas.longitude!,
+                                        label: cas.localisation,
+                                      );
+                                    } catch (e) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(content: Text(e.toString())),
+                                      );
+                                    }
+                                  } else {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(content: Text('Coordonnées GPS indisponibles.')),
+                                    );
+                                  }
+                                },
+                              ),
                             ],
                           ),
                           const SizedBox(height: 4),
@@ -173,10 +207,16 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
                               ),
                             ],
                           ),
-                          const SizedBox(height: 4),
+                          const SizedBox(height: 8),
                           Text(
                             'Publié le : ${cas.createdAt.toLocal().toString().split(' ')[0]}',
                             style: const TextStyle(color: Colors.grey, fontSize: 12),
+                          ),
+                          const SizedBox(height: 8),
+                          // Nombre de likes seulement
+                          Text(
+                            '${cas.likes} likes',
+                            style: const TextStyle(color: Colors.grey),
                           ),
                         ],
                       ),
@@ -190,7 +230,7 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
       ),
       floatingActionButton: FloatingActionButton(
         backgroundColor: Colors.green,
-        child: const Icon(Icons.add, color: Colors.white,),
+        child: const Icon(Icons.add, color: Colors.white),
         onPressed: () async {
           final added = await Navigator.push<bool>(
             context,

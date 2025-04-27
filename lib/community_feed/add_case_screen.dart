@@ -42,7 +42,9 @@ class _AddCaseScreenState extends State<AddCaseScreen> {
     if (_pickedImage == null || title.isEmpty || desc.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Veuillez ajouter un titre, une image et une description.'),
+          content: Text(
+            'Veuillez ajouter un titre, une image et une description.',
+          ),
         ),
       );
       return;
@@ -54,9 +56,9 @@ class _AddCaseScreenState extends State<AddCaseScreen> {
       final uid = FirebaseAuth.instance.currentUser!.uid;
 
       // 1. Upload de l'image
-      final storageRef = FirebaseStorage.instance
-          .ref()
-          .child('cases/${const Uuid().v4()}');
+      final storageRef = FirebaseStorage.instance.ref().child(
+        'cases/${const Uuid().v4()}',
+      );
       UploadTask uploadTask;
       if (kIsWeb) {
         uploadTask = storageRef.putData(await _pickedImage!.readAsBytes());
@@ -91,6 +93,7 @@ class _AddCaseScreenState extends State<AddCaseScreen> {
         createdAt: DateTime.now(),
         latitude: latitude,
         longitude: longitude,
+        likes: 0, // ✅ Ajout ici obligatoire
       );
 
       // 4. Sauvegarde du cas
@@ -105,13 +108,11 @@ class _AddCaseScreenState extends State<AddCaseScreen> {
           .doc(uid)
           .collection('cases')
           .doc(caseId)
-          .set({
-        ...newCase.toMap(),
-        'userId': uid,
-      });
+          .set({...newCase.toMap(), 'userId': uid});
 
       // 6. Récupération des infos de l'utilisateur pour la notification
-      final userDoc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
+      final userDoc =
+          await FirebaseFirestore.instance.collection('users').doc(uid).get();
       final userData = userDoc.data() ?? {};
       final nom = userData['nom'] ?? '';
       final prenom = userData['prenom'] ?? '';
@@ -134,9 +135,9 @@ class _AddCaseScreenState extends State<AddCaseScreen> {
       if (!mounted) return;
       Navigator.pop(context, true);
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erreur : $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Erreur : $e')));
     } finally {
       setState(() => _isLoading = false);
     }
@@ -155,7 +156,9 @@ class _AddCaseScreenState extends State<AddCaseScreen> {
               controller: _titleController,
               decoration: InputDecoration(
                 hintText: 'Titre du cas...',
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(15)),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(15),
+                ),
               ),
             ),
             const SizedBox(height: 16),
@@ -168,16 +171,28 @@ class _AddCaseScreenState extends State<AddCaseScreen> {
                   borderRadius: BorderRadius.circular(15),
                   border: Border.all(color: Colors.grey),
                 ),
-                child: _pickedImage != null
-                    ? ClipRRect(
-                        borderRadius: BorderRadius.circular(15),
-                        child: kIsWeb
-                            ? Image.network(_pickedImage!.path, fit: BoxFit.cover)
-                            : Image.file(File(_pickedImage!.path), fit: BoxFit.cover),
-                      )
-                    : const Center(
-                        child: Icon(Icons.add_a_photo, size: 50, color: Colors.grey),
-                      ),
+                child:
+                    _pickedImage != null
+                        ? ClipRRect(
+                          borderRadius: BorderRadius.circular(15),
+                          child:
+                              kIsWeb
+                                  ? Image.network(
+                                    _pickedImage!.path,
+                                    fit: BoxFit.cover,
+                                  )
+                                  : Image.file(
+                                    File(_pickedImage!.path),
+                                    fit: BoxFit.cover,
+                                  ),
+                        )
+                        : const Center(
+                          child: Icon(
+                            Icons.add_a_photo,
+                            size: 50,
+                            color: Colors.grey,
+                          ),
+                        ),
               ),
             ),
             const SizedBox(height: 16),
@@ -186,7 +201,9 @@ class _AddCaseScreenState extends State<AddCaseScreen> {
               maxLines: 5,
               decoration: InputDecoration(
                 hintText: 'Description du problème...',
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(15)),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(15),
+                ),
               ),
             ),
             const SizedBox(height: 20),
@@ -195,14 +212,20 @@ class _AddCaseScreenState extends State<AddCaseScreen> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.green,
                 padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(25),
+                ),
               ),
-              child: _isLoading
-                  ? const CircularProgressIndicator(color: Colors.white)
-                  : const Text(
-                      'Partager',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                    ),
+              child:
+                  _isLoading
+                      ? const CircularProgressIndicator(color: Colors.white)
+                      : const Text(
+                        'Partager',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
             ),
           ],
         ),

@@ -6,8 +6,9 @@ class CaseModel {
   final String role; // Spécialité : Fruit, Blé, etc.
   final String localisation;
   final DateTime createdAt;
-  final double? latitude;    // ✅ ajouté
-  final double? longitude;   // ✅ ajouté
+  final double? latitude;
+  final double? longitude;
+  final int likes;  // ✅ Nouveau champ ajouté !
 
   CaseModel({
     required this.id,
@@ -19,6 +20,7 @@ class CaseModel {
     required this.createdAt,
     this.latitude,
     this.longitude,
+    this.likes = 0,  // ✅ Valeur par défaut à 0 pour éviter des erreurs
   });
 
   // Convertir un objet en Map pour Firestore
@@ -31,8 +33,9 @@ class CaseModel {
       'role': role,
       'localisation': localisation,
       'createdAt': createdAt.toIso8601String(),
-      'latitude': latitude,       // ✅ ajouté
-      'longitude': longitude,     // ✅ ajouté
+      'latitude': latitude,
+      'longitude': longitude,
+      'likes': likes, // ✅ Ajouté ici
     };
   }
 
@@ -46,8 +49,9 @@ class CaseModel {
       role: map['role'] ?? '',
       localisation: map['localisation'] ?? '',
       createdAt: DateTime.tryParse(map['createdAt'] ?? '') ?? DateTime.now(),
-      latitude: (map['latitude'] as num?)?.toDouble(),    // ✅ ajouté
-      longitude: (map['longitude'] as num?)?.toDouble(),  // ✅ ajouté
+      latitude: (map['latitude'] as num?)?.toDouble(),
+      longitude: (map['longitude'] as num?)?.toDouble(),
+      likes: (map['likes'] ?? 0) as int, // ✅ Important pour récupérer les likes
     );
   }
 }
