@@ -7,7 +7,7 @@ import 'package:geocoding/geocoding.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
-import 'package:flutter_svg/svg.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:get/get.dart';
@@ -16,7 +16,6 @@ import 'package:robotic_app/registerScreens/login.dart';
 import 'package:robotic_app/registerScreens/registertextfield.dart';
 import 'package:robotic_app/screens/screens.dart';
 import '../../shared/colors.dart';
-import 'package:geocoding/geocoding.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({Key? key}) : super(key: key);
@@ -35,6 +34,7 @@ class _RegisterPageState extends State<RegisterPage> {
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
   final confirmPasswordController = TextEditingController();
+  final cityController = TextEditingController();
 
   File? selectedImage;
   String? selectedRole;
@@ -66,11 +66,15 @@ class _RegisterPageState extends State<RegisterPage> {
         position.longitude,
       );
 
-      setState(() {
-        detectedCity = placemarks.first.locality ?? placemarks.first.subAdministrativeArea;
-      });
+      if (placemarks.isNotEmpty) {
+        final city = placemarks.first.locality ?? placemarks.first.subAdministrativeArea;
+        setState(() {
+          detectedCity = city;
+          cityController.text = city!;
+        });
+      }
     } catch (e) {
-      debugPrint('Erreur détection localisation : $e');
+      debugPrint('Erreur détection localisation : $e');
     }
   }
 
@@ -102,13 +106,22 @@ class _RegisterPageState extends State<RegisterPage> {
     }
     if (!_formKey.currentState!.validate()) return;
 
+    if (passwordController.text != confirmPasswordController.text) {
+      QuickAlert.show(
+        context: context,
+        type: QuickAlertType.error,
+        title: 'Erreur',
+        text: 'Les mots de passe ne correspondent pas',
+      );
+      return;
+    }
+
     setState(() => isLoading = true);
     try {
       final cred = await FirebaseAuth.instance.createUserWithEmailAndPassword(
         email: emailController.text.trim(),
         password: passwordController.text,
       );
-      final fcmTooken = await FirebaseMessaging.instance.getToken();
       final imgUrl = await uploadImage();
 
       await FirebaseFirestore.instance
@@ -125,7 +138,6 @@ class _RegisterPageState extends State<RegisterPage> {
         'role': selectedRole,
         'experience': '',
         'materiels': '',
-        //'token' : fcmTooken,
       });
 
       if (!mounted) return;
@@ -138,7 +150,7 @@ class _RegisterPageState extends State<RegisterPage> {
           ? 'Mot de passe trop faible'
           : e.code == 'email-already-in-use'
               ? 'Cet email est déjà utilisé'
-              : 'Erreur : ${e.message}';
+              : 'Erreur : ${e.message}';
       QuickAlert.show(
         context: context,
         type: QuickAlertType.error,
@@ -161,17 +173,21 @@ class _RegisterPageState extends State<RegisterPage> {
     return TextFormField(
       controller: ctrl,
       obscureText: isPasswordVisible,
-      validator: (v) => v!.length < 6 ? 'Au moins 6 caractères' : null,
+      validator: (v) {
+        if (v == null || v.isEmpty) return 'Champ obligatoire';
+        if (v.length < 6) return 'Au moins 6 caractères';
+        if (!RegExp(r"^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{6,}$").hasMatch(v)) {
+          return 'Minimum 6 caractères avec 1 lettre et 1 chiffre';
+        }
+        return null;
+      },
       decoration: InputDecoration(
         hintText: hint,
         prefixIcon: const Icon(CupertinoIcons.lock, size: 22),
         suffixIcon: GestureDetector(
-          onTap: () =>
-              setState(() => isPasswordVisible = !isPasswordVisible),
+          onTap: () => setState(() => isPasswordVisible = !isPasswordVisible),
           child: Icon(
-            isPasswordVisible
-                ? CupertinoIcons.eye
-                : CupertinoIcons.eye_slash,
+            isPasswordVisible ? CupertinoIcons.eye : CupertinoIcons.eye_slash,
             size: 22,
           ),
         ),
@@ -210,7 +226,6 @@ class _RegisterPageState extends State<RegisterPage> {
                   style: TextStyle(color: Colors.black),
                 ),
                 const SizedBox(height: 40),
-                // Avatar
                 Center(
                   child: Stack(
                     clipBehavior: Clip.none,
@@ -254,7 +269,6 @@ class _RegisterPageState extends State<RegisterPage> {
                   ),
                 ),
                 const SizedBox(height: 30),
-                // Nom & Prénom
                 Row(
                   children: [
                     Expanded(
@@ -262,8 +276,13 @@ class _RegisterPageState extends State<RegisterPage> {
                         icon: CupertinoIcons.person,
                         text: 'Nom',
                         controller: nomController,
-                        validator: (v) =>
-                            v!.isEmpty ? 'Entrez un nom valide' : null,
+                        validator: (v) {
+                          if (v == null || v.isEmpty) return 'Champ obligatoire';
+                          if (!RegExp(r"^[a-zA-ZÀ-ÿ\s]+$").hasMatch(v)) {
+                            return 'Seulement lettres autorisées';
+                          }
+                          return null;
+                        },
                       ),
                     ),
                     const SizedBox(width: 10),
@@ -272,14 +291,18 @@ class _RegisterPageState extends State<RegisterPage> {
                         icon: CupertinoIcons.person,
                         text: 'Prénom',
                         controller: prenomController,
-                        validator: (v) =>
-                            v!.isEmpty ? 'Entrez un prénom valide' : null,
+                        validator: (v) {
+                          if (v == null || v.isEmpty) return 'Champ obligatoire';
+                          if (!RegExp(r"^[a-zA-ZÀ-ÿ\s]+$").hasMatch(v)) {
+                            return 'Seulement lettres autorisées';
+                          }
+                          return null;
+                        },
                       ),
                     ),
                   ],
                 ),
                 const SizedBox(height: 30),
-                // Rôle
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -289,7 +312,7 @@ class _RegisterPageState extends State<RegisterPage> {
                   ),
                   child: DropdownButton<String>(
                     value: selectedRole,
-                    hint: const Text('Choisissez votre rôle'),
+                    hint: const Text('Choisissez votre Type'),
                     isExpanded: true,
                     underline: const SizedBox(),
                     icon: const Icon(Icons.arrow_drop_down, size: 24),
@@ -305,16 +328,12 @@ class _RegisterPageState extends State<RegisterPage> {
                   ),
                 ),
                 const SizedBox(height: 30),
-                // Localisation automatique
                 TextFormField(
                   readOnly: true,
-                  controller: TextEditingController(text: detectedCity),
-                  validator: (_) => detectedCity == null
-                      ? 'Localisation requise'
-                      : null,
+                  controller: cityController,
+                  validator: (_) => detectedCity == null ? 'Localisation requise' : null,
                   decoration: InputDecoration(
-                    hintText:
-                        detectedCity == null ? 'Chargement localisation...' : null,
+                    hintText: detectedCity == null ? 'Chargement localisation...' : null,
                     prefixIcon: const Icon(CupertinoIcons.location_solid),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(25),
@@ -327,26 +346,20 @@ class _RegisterPageState extends State<RegisterPage> {
                   ),
                 ),
                 const SizedBox(height: 30),
-                // Email
                 RegistrationTextField(
                   icon: CupertinoIcons.mail,
                   text: 'Email',
                   controller: emailController,
-                validator:
-                      (email) =>
-                          email!.contains(
-                                RegExp(r"^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$"),
-                              )
-                              ? null
-                              : "Entrez un email valide",
+                  validator: (email) =>
+                      email!.contains(RegExp(r"^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$"))
+                          ? null
+                          : "Entrez un email valide",
                 ),
                 const SizedBox(height: 30),
-                // Mot de passe
                 _buildPasswordField('Mot de passe', passwordController),
                 const SizedBox(height: 30),
                 _buildPasswordField('Confirmer mot de passe', confirmPasswordController),
                 const SizedBox(height: 30),
-                // Bouton Enregistrer
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
@@ -364,18 +377,18 @@ class _RegisterPageState extends State<RegisterPage> {
                         : const Text(
                             'Enregistrer',
                             style: TextStyle(
-                                fontSize: 16,
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold),
+                              fontSize: 16,
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                   ),
                 ),
                 const SizedBox(height: 20),
-                // Lien vers la page de connexion
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Text('Vous avez un compte ?'),
+                    const Text('Vous avez un compte ?'),
                     TextButton(
                       onPressed: () => Get.off(
                         () => const LoginPage(),
@@ -384,7 +397,9 @@ class _RegisterPageState extends State<RegisterPage> {
                       child: const Text(
                         "S'identifier",
                         style: TextStyle(
-                            color: mainColor, fontWeight: FontWeight.bold),
+                          color: mainColor,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                   ],

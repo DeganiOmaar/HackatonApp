@@ -1,13 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
-import 'add_case_screen.dart';
-import 'case_model.dart';
-import 'case_service.dart';
+import 'package:get/get.dart';
+import 'package:robotic_app/community_feed/add_case_screen.dart';
+import 'package:robotic_app/community_feed/case_model.dart';
+import 'package:robotic_app/community_feed/case_service.dart';
+import 'package:robotic_app/community_feed/statisticpage.dart';
+import 'package:robotic_app/map_view_screen.dart';
+import 'package:robotic_app/open_native_map.dart';   // <-- nouvelle page
 
 class CommunityFeedScreen extends StatefulWidget {
   final String userRole;
   final String userLocalisation;
+
   const CommunityFeedScreen({
     Key? key,
     required this.userRole,
@@ -27,7 +32,6 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
     _detectCity();
   }
 
-  /// Détecte la ville de l'utilisateur (reste affichée mais non utilisée pour filtrer)
   Future<void> _detectCity() async {
     try {
       if (!await Geolocator.isLocationServiceEnabled()) return;
@@ -44,7 +48,8 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
       var marks = await placemarkFromCoordinates(pos.latitude, pos.longitude);
       if (marks.isNotEmpty) {
         setState(() {
-          detectedCity = marks.first.locality ?? marks.first.subAdministrativeArea;
+          detectedCity =
+              marks.first.locality ?? marks.first.subAdministrativeArea;
         });
       }
     } catch (_) {}
@@ -54,10 +59,15 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-       appBar: AppBar(
+      appBar: AppBar(
+        actions: [
+          IconButton(onPressed: (){
+            Get.to(()=>StatisticsPage());
+          }, icon: Icon(Icons.analytics_outlined))
+        ],
         backgroundColor: Colors.white,
         title: const Text(
-          "Community Feed",
+          'Community Feed',
           style: TextStyle(fontWeight: FontWeight.w700, fontSize: 19),
         ),
         centerTitle: true,
@@ -72,14 +82,14 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
             return const Center(child: Text('Aucun cas trouvé'));
           }
 
-          // Affiche tous les cas récupérés
-          final allCases = snapshot.data!;
+          final cases = snapshot.data!;
 
           return ListView.builder(
             padding: const EdgeInsets.all(16),
-            itemCount: allCases.length,
+            itemCount: cases.length,
             itemBuilder: (context, index) {
-              final cas = allCases[index];
+              final cas = cases[index];
+
               return Card(
                 margin: const EdgeInsets.only(bottom: 16),
                 shape: RoundedRectangleBorder(
@@ -88,6 +98,7 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // Image
                     ClipRRect(
                       borderRadius: const BorderRadius.only(
                         topLeft: Radius.circular(15),
@@ -95,23 +106,23 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
                       ),
                       child: Image.network(
                         cas.imageUrl,
-                        fit: BoxFit.cover,
                         width: double.infinity,
                         height: 200,
-                        loadingBuilder: (c, child, progress) {
-                          if (progress == null) return child;
-                          return const Center(child: CircularProgressIndicator());
-                        },
-                        errorBuilder: (_, __, ___) => const Center(child: Icon(Icons.error)),
+                        fit: BoxFit.cover,
+                        loadingBuilder: (_, child, progress) =>
+                            progress == null ? child : const Center(child: CircularProgressIndicator()),
+                        errorBuilder: (_, __, ___) =>
+                            const Center(child: Icon(Icons.error)),
                       ),
                     ),
+                    // Infos
                     Padding(
-                      padding: const EdgeInsets.all(12.0),
+                      padding: const EdgeInsets.all(12),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            cas.description,
+                            cas.title,
                             style: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w500,
@@ -122,14 +133,34 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
                             children: [
                               const Icon(Icons.place, size: 18, color: Colors.grey),
                               const SizedBox(width: 4),
-                              Text(
-                                cas.localisation,
-                                style: const TextStyle(color: Colors.grey),
+                              Expanded(
+                                child: Text(
+                                  cas.localisation,
+                                  style: const TextStyle(color: Colors.grey),
+                                ),
                               ),
-                              Spacer(),
-                              IconButton(onPressed: (){
-                                
-                              }, icon: Icon(Icons.location_on_sharp))
+                              IconButton(
+  icon: const Icon(Icons.location_on),
+  onPressed: () async {
+    if (cas.latitude != null && cas.longitude != null) {
+      try {
+        await openNativeMap(
+          latitude: cas.latitude!,
+          longitude: cas.longitude!,
+          label: cas.localisation,
+        );
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.toString())),
+        );
+      }
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Coordonnées GPS indisponibles.')),
+      );
+    }
+  },
+)
                             ],
                           ),
                           const SizedBox(height: 4),
@@ -146,10 +177,7 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
                           const SizedBox(height: 4),
                           Text(
                             'Publié le : ${cas.createdAt.toLocal().toString().split(' ')[0]}',
-                            style: const TextStyle(
-                              color: Colors.grey,
-                              fontSize: 12,
-                            ),
+                            style: const TextStyle(color: Colors.grey, fontSize: 12),
                           ),
                         ],
                       ),
@@ -162,8 +190,10 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
         },
       ),
       floatingActionButton: FloatingActionButton(
+        backgroundColor: Colors.green,
+        child: const Icon(Icons.add, color: Colors.white,),
         onPressed: () async {
-          final result = await Navigator.push<bool>(
+          final added = await Navigator.push<bool>(
             context,
             MaterialPageRoute(
               builder: (_) => AddCaseScreen(
@@ -172,10 +202,8 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
               ),
             ),
           );
-          if (result == true) setState(() {});
+          if (added == true) setState(() {});
         },
-        backgroundColor: Colors.green,
-        child: const Icon(Icons.add),
       ),
     );
   }

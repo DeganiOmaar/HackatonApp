@@ -14,6 +14,7 @@ import 'package:robotic_app/recherche_agriculteur/search_agriculteur_screen.dart
 import 'package:robotic_app/screens/home_page.dart';
 import 'package:robotic_app/shared/colors.dart';
 
+import '../chatbot/chatbot.dart';
 import '../profilepages/profile.dart';
 
 class Screens extends StatefulWidget {
@@ -103,26 +104,11 @@ class _ScreensState extends State<Screens> {
                   icon: LineAwesomeIcons.question_circle,
                   text: 'Question',
                 ),
-               
 
-                const GButton(
-                  icon: Icons.image_aspect_ratio,
-                  text: 'Images',
-                ),
-                 GButton(
-                  icon: LineAwesomeIcons.search_solid,
-                  text: 'Recherche',
-                ),
+                const GButton(icon: Icons.image_outlined, text: 'Images'),
+                GButton(icon: LineAwesomeIcons.search_solid, text: 'Recherche'),
 
-                 const GButton(
-                  icon: CupertinoIcons.list_bullet,
-                  text: ' Feed',
-                ),
-                  const GButton(
-                  icon: Icons.notifications,
-                  text: ' Notif',
-                ),
-
+                const GButton(icon: CupertinoIcons.list_bullet, text: ' Feed'),
                 const GButton(
                   icon: CupertinoIcons.person_alt_circle,
                   text: 'Profile',
@@ -142,9 +128,7 @@ class _ScreensState extends State<Screens> {
                 userRole: userData['role'],
                 userLocalisation: userData['localisation'],
               ),
-              const Notifications(),
               const Profile(),
-              
             ],
           ),
         );

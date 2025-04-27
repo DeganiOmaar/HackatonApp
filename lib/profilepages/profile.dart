@@ -1,4 +1,3 @@
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
@@ -8,9 +7,11 @@ import 'package:gap/gap.dart';
 import 'package:get/get.dart';
 import 'package:line_awesome_flutter/line_awesome_flutter.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
+import 'package:robotic_app/notificationpage/notifications.dart';
 import 'package:robotic_app/profilepages/editprofile.dart';
 import 'package:robotic_app/profilepages/profilecard.dart';
 import 'package:robotic_app/registerScreens/login.dart';
+import 'package:robotic_app/statistique/rendement_statistics_screen.dart';
 
 import '../shared/colors.dart';
 
@@ -53,93 +54,104 @@ class _ProfileState extends State<Profile> {
   }
 
   void _openExperienceMaterialDialog() {
-  final experienceController = TextEditingController(text: userData['experience'] ?? '');
-  final materielsController = TextEditingController(text: userData['materiels'] ?? '');
+    final experienceController = TextEditingController(
+      text: userData['experience'] ?? '',
+    );
+    final materielsController = TextEditingController(
+      text: userData['materiels'] ?? '',
+    );
 
-  showDialog(
-    context: context,
-    builder: (context) => Dialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Center(
-                child: Text(
-                  'Modifier votre expérience',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 20),
-              TextField(
-                controller: experienceController,
-                maxLines: 3,
-                decoration: InputDecoration(
-                  labelText: 'Expérience',
-                  hintText: 'Décrivez brièvement votre expérience',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 15),
-              TextField(
-                controller: materielsController,
-                maxLines: 3,
-                decoration: InputDecoration(
-                  labelText: 'Matériels',
-                  hintText: 'Listez vos équipements',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 25),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  TextButton(
-                    style: TextButton.styleFrom(
-                      foregroundColor: Colors.red,
-                    ),
-                    onPressed: () => Navigator.pop(context),
-                    child: const Text('Annuler'),
-                  ),
-                  ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: mainColor,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+    showDialog(
+      context: context,
+      builder:
+          (context) => Dialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Center(
+                      child: Text(
+                        'Modifier votre expérience',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
-                    onPressed: () async {
-                      await FirebaseFirestore.instance
-                          .collection('users')
-                          .doc(FirebaseAuth.instance.currentUser!.uid)
-                          .update({
-                        'experience': experienceController.text.trim(),
-                        'materiels': materielsController.text.trim(),
-                      });
-                      Navigator.pop(context);
-                      getData();
-                    },
-                    child: const Text('Enregistrer', style: TextStyle(color: Colors.white),),
-                  ),
-                ],
+                    const SizedBox(height: 20),
+                    TextField(
+                      controller: experienceController,
+                      maxLines: 3,
+                      decoration: InputDecoration(
+                        labelText: 'Expérience',
+                        hintText: 'Décrivez brièvement votre expérience',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 15),
+                    TextField(
+                      controller: materielsController,
+                      maxLines: 3,
+                      decoration: InputDecoration(
+                        labelText: 'Matériels',
+                        hintText: 'Listez vos équipements',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 25),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        TextButton(
+                          style: TextButton.styleFrom(
+                            foregroundColor: Colors.red,
+                          ),
+                          onPressed: () => Navigator.pop(context),
+                          child: const Text('Annuler'),
+                        ),
+                        ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: mainColor,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          onPressed: () async {
+                            await FirebaseFirestore.instance
+                                .collection('users')
+                                .doc(FirebaseAuth.instance.currentUser!.uid)
+                                .update({
+                                  'experience':
+                                      experienceController.text.trim(),
+                                  'materiels': materielsController.text.trim(),
+                                });
+                            Navigator.pop(context);
+                            getData();
+                          },
+                          child: const Text(
+                            'Enregistrer',
+                            style: TextStyle(color: Colors.white),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
-            ],
+            ),
           ),
-        ),
-      ),
-    ),
-  );
-}
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -157,28 +169,44 @@ class _ProfileState extends State<Profile> {
         )
         : Scaffold(
           backgroundColor: Colors.white,
+          appBar: AppBar(
+            backgroundColor: Colors.white,
+            title: const Text(
+              "Profile",
+              style: TextStyle(fontWeight: FontWeight.w700, fontSize: 19),
+            ),
+            centerTitle: true,
+            actions: [
+              IconButton(onPressed: () {
+                Get.to(()=>Notifications());
+              }, icon: Icon(Icons.notifications, color: mainColor,)),
+            ],
+          ),
           body: SingleChildScrollView(
             child: Column(
               children: [
                 Stack(
                   children: [
                     Positioned(
-                      child: Container(height: 300, color: Colors.white),
+                      child: Container(height: 170, color: Colors.white),
                     ),
-                    Positioned(child: Container(height: 240, color: const Color.fromARGB(232, 173, 228, 237))),
+
                     Positioned(
-  top: 180,
-  right: MediaQuery.of(context).size.width / 2 - 60,
-  child: Center(
-    child: CircleAvatar(
-      radius: 60,
-      backgroundColor: Colors.white,
-      backgroundImage: (userData['image'] != null && userData['image'].toString().isNotEmpty)
-          ? NetworkImage(userData['image'])
-          : const AssetImage('assets/img/avatr.png') as ImageProvider,
-    ),
-  ),
-),
+                      top: 30,
+                      right: MediaQuery.of(context).size.width / 2 - 60,
+                      child: Center(
+                        child: CircleAvatar(
+                          radius: 60,
+                          backgroundColor: Colors.white,
+                          backgroundImage:
+                              (userData['image'] != null &&
+                                      userData['image'].toString().isNotEmpty)
+                                  ? NetworkImage(userData['image'])
+                                  : const AssetImage('assets/img/avatr.png')
+                                      as ImageProvider,
+                        ),
+                      ),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 10),
@@ -187,7 +215,7 @@ class _ProfileState extends State<Profile> {
                   style: TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.bold,
-                    color:  Colors.black,
+                    color: Colors.black,
                   ),
                 ),
                 Padding(
@@ -199,7 +227,7 @@ class _ProfileState extends State<Profile> {
                         Row(
                           children: [
                             const Text(
-                              "Role",
+                              "Type",
                               style: TextStyle(
                                 fontSize: 17,
                                 color: Colors.grey,
@@ -253,6 +281,17 @@ class _ProfileState extends State<Profile> {
                             Get.to(() => EditProfilePage());
                           },
                         ),
+                        Gap(10),
+                        ProfileSettingCard(
+                          text: "Statistiques de Rendement",
+                          icon: CupertinoIcons.chart_bar,
+                          onPressed:
+                              () => Get.to(
+                                () => const RendementStatisticsScreen(),
+                              ),
+                        ),
+
+                        Gap(10),
                         Gap(20),
                         ProfileSettingCard(
                           text: "Obtenir l'aide",

@@ -6,6 +6,7 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:uuid/uuid.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:geocoding/geocoding.dart';
 
 import 'case_model.dart';
 import 'case_service.dart';
@@ -32,7 +33,9 @@ class _AddCaseScreenState extends State<AddCaseScreen> {
 
   Future<void> _pickImage() async {
     final picked = await ImagePicker().pickImage(source: ImageSource.gallery);
-    if (picked != null) setState(() => _pickedImage = picked);
+    if (picked != null) {
+      setState(() => _pickedImage = picked);
+    }
   }
 
   Future<void> _submit() async {
@@ -41,19 +44,18 @@ class _AddCaseScreenState extends State<AddCaseScreen> {
     if (_pickedImage == null || title.isEmpty || desc.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text(
-            'Veuillez ajouter un titre, une image et une description.',
-          ),
+          content: Text('Veuillez ajouter un titre, une image et une description.'),
         ),
       );
       return;
     }
+
     setState(() => _isLoading = true);
+
     try {
-      // Récupération de l'uid courant
       final uid = FirebaseAuth.instance.currentUser!.uid;
 
-      // 1) upload image
+      // 1. Upload de l'image
       final storageRef = FirebaseStorage.instance
           .ref()
           .child('cases/${const Uuid().v4()}');
@@ -66,7 +68,20 @@ class _AddCaseScreenState extends State<AddCaseScreen> {
       final snap = await uploadTask;
       final imageUrl = await snap.ref.getDownloadURL();
 
-      // 2) create case model
+      // 2. Récupération latitude/longitude depuis localisation
+      double? latitude;
+      double? longitude;
+      try {
+        final locations = await locationFromAddress(widget.userLocalisation);
+        if (locations.isNotEmpty) {
+          latitude = locations.first.latitude;
+          longitude = locations.first.longitude;
+        }
+      } catch (e) {
+        debugPrint('Erreur lors de la géolocalisation : $e');
+      }
+
+      // 3. Création du cas
       final caseId = const Uuid().v4();
       final newCase = CaseModel(
         id: caseId,
@@ -76,18 +91,17 @@ class _AddCaseScreenState extends State<AddCaseScreen> {
         role: widget.userRole.toLowerCase(),
         localisation: widget.userLocalisation.toLowerCase(),
         createdAt: DateTime.now(),
+        latitude: latitude,
+        longitude: longitude,
       );
 
-      // 3) add to global 'cases' collection with userId
-      await FirebaseFirestore.instance
-          .collection('cases')
-          .doc(caseId)
-          .set({
+      // 4. Sauvegarde du cas
+      await FirebaseFirestore.instance.collection('cases').doc(caseId).set({
         ...newCase.toMap(),
         'userId': uid,
       });
 
-      // 4) add to user's subcollection 'users/{uid}/cases'
+      // 5. Ajout aussi dans la sous-collection utilisateur
       await FirebaseFirestore.instance
           .collection('users')
           .doc(uid)
@@ -98,13 +112,13 @@ class _AddCaseScreenState extends State<AddCaseScreen> {
         'userId': uid,
       });
 
-      // 5) fetch user data
+      // 6. Récupération des infos de l'utilisateur pour la notification
       final userDoc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
       final userData = userDoc.data() ?? {};
-      final nom = userData['nom'] as String? ?? '';
-      final prenom = userData['prenom'] as String? ?? '';
+      final nom = userData['nom'] ?? '';
+      final prenom = userData['prenom'] ?? '';
 
-      // 6) add notification with userId
+      // 7. Enregistrement de la notification
       await FirebaseFirestore.instance.collection('notifications').add({
         'title': title,
         'content': desc,
@@ -113,17 +127,17 @@ class _AddCaseScreenState extends State<AddCaseScreen> {
         'nom': nom,
         'prenom': prenom,
         'userId': uid,
-        'caseId': caseId, 
-        'imageUrl': imageUrl, 
-
-
+        'caseId': caseId,
+        'imageUrl': imageUrl,
+        'latitude': latitude,
+        'longitude': longitude,
       });
 
       if (!mounted) return;
       Navigator.pop(context, true);
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erreur: \$e')),
+        SnackBar(content: Text('Erreur : $e')),
       );
     } finally {
       setState(() => _isLoading = false);

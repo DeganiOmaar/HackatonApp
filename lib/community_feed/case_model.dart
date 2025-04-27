@@ -3,9 +3,11 @@ class CaseModel {
   final String title;
   final String imageUrl;
   final String description;
-  final String role; // Spécialité: Fruit, Blé, etc.
+  final String role; // Spécialité : Fruit, Blé, etc.
   final String localisation;
   final DateTime createdAt;
+  final double? latitude;    // ✅ ajouté
+  final double? longitude;   // ✅ ajouté
 
   CaseModel({
     required this.id,
@@ -15,9 +17,11 @@ class CaseModel {
     required this.role,
     required this.localisation,
     required this.createdAt,
+    this.latitude,
+    this.longitude,
   });
 
-  // Convertir un objet en Map pour Firebase
+  // Convertir un objet en Map pour Firestore
   Map<String, dynamic> toMap() {
     return {
       'id': id,
@@ -27,6 +31,8 @@ class CaseModel {
       'role': role,
       'localisation': localisation,
       'createdAt': createdAt.toIso8601String(),
+      'latitude': latitude,       // ✅ ajouté
+      'longitude': longitude,     // ✅ ajouté
     };
   }
 
@@ -39,9 +45,9 @@ class CaseModel {
       description: map['description'] ?? '',
       role: map['role'] ?? '',
       localisation: map['localisation'] ?? '',
-      createdAt: DateTime.parse(
-        map['createdAt'] ?? DateTime.now().toIso8601String(),
-      ),
+      createdAt: DateTime.tryParse(map['createdAt'] ?? '') ?? DateTime.now(),
+      latitude: (map['latitude'] as num?)?.toDouble(),    // ✅ ajouté
+      longitude: (map['longitude'] as num?)?.toDouble(),  // ✅ ajouté
     );
   }
 }

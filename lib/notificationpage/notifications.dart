@@ -5,7 +5,7 @@ import 'package:flutter_svg/svg.dart';
 import 'package:intl/intl.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:robotic_app/community_feed/CaseDetailsScreen.dart';
-import '../shared/colors.dart'; 
+import '../shared/colors.dart';
 
 class Notifications extends StatefulWidget {
   const Notifications({super.key});
@@ -33,10 +33,11 @@ class _NotificationsState extends State<Notifications> {
     setState(() => isLoading = true);
 
     try {
-      final doc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(currentUid)
-          .get();
+      final doc =
+          await FirebaseFirestore.instance
+              .collection('users')
+              .doc(currentUid)
+              .get();
       userData = doc.data()!;
     } catch (e) {
       print('Erreur chargement userData: $e');
@@ -88,10 +89,11 @@ class _NotificationsState extends State<Notifications> {
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 20.0),
         child: StreamBuilder<QuerySnapshot>(
-          stream: FirebaseFirestore.instance
-              .collection('notifications')
-              .where('role', isEqualTo: userRole)
-              .snapshots(),
+          stream:
+              FirebaseFirestore.instance
+                  .collection('notifications')
+                  .where('role', isEqualTo: userRole)
+                  .snapshots(),
           builder: (context, snapshot) {
             if (snapshot.hasError) {
               return const Center(child: Text('Une erreur est survenue.'));
@@ -126,11 +128,12 @@ class _NotificationsState extends State<Notifications> {
                 final data = docs[index].data()! as Map<String, dynamic>;
                 final nom = data['nom'] ?? '';
                 final prenom = data['prenom'] ?? '';
-                final title = data['content'] ?? '';
+                final title = data['title'] ?? '';
                 final timestamp = (data['date'] as Timestamp?)?.toDate();
-                final dateText = timestamp != null
-                    ? DateFormat('yMMMd').format(timestamp)
-                    : '';
+                final dateText =
+                    timestamp != null
+                        ? DateFormat('yMMMd').format(timestamp)
+                        : '';
                 final caseId = data['caseId'];
 
                 return InkWell(
@@ -139,7 +142,7 @@ class _NotificationsState extends State<Notifications> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-      builder: (_) => CaseDetailsScreen(caseData: data),
+                          builder: (_) => CaseDetailsScreen(caseData: data),
                         ),
                       );
                     }
@@ -168,10 +171,7 @@ class _NotificationsState extends State<Notifications> {
                       const SizedBox(height: 7),
                       Row(
                         children: [
-                          SvgPicture.asset(
-                            'assets/img/point.svg',
-                            height: 14,
-                          ),
+                          SvgPicture.asset('assets/img/point.svg', height: 14),
                           const SizedBox(width: 10),
                           Text(
                             dateText,

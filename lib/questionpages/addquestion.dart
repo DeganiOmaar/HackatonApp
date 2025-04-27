@@ -113,113 +113,115 @@ class _AddQuestionPageState extends State<AddQuestionPage> {
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(16),
-          child: Column(
-            children: [
-              Gap(30),
-              Container(
-                decoration: BoxDecoration(
-                  border: Border.all(color: mainColor, width: 2),
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                padding: const EdgeInsets.all(12),
-                child: GestureDetector(
-                  onTap: _pickImage,
-                  child: SizedBox(
-                    height: 220,
-                    child:
-                        _pickedImage == null
-                            // si pas d'image, on affiche une icône de chargement centrée
-                            ? Center(
-                              child: Icon(
-                                Icons.cloud_upload,
-                                color: mainColor,
-                                size: 40,
+          child: SingleChildScrollView(
+            child: Column(
+              children: [
+                Gap(30),
+                Container(
+                  decoration: BoxDecoration(
+                    border: Border.all(color: mainColor, width: 2),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  padding: const EdgeInsets.all(12),
+                  child: GestureDetector(
+                    onTap: _pickImage,
+                    child: SizedBox(
+                      height: 220,
+                      child:
+                          _pickedImage == null
+                              // si pas d'image, on affiche une icône de chargement centrée
+                              ? Center(
+                                child: Icon(
+                                  Icons.cloud_upload,
+                                  color: mainColor,
+                                  size: 40,
+                                ),
+                              )
+                              // sinon on affiche l'image sélectionnée, couvrant tout l'espace
+                              : ClipRRect(
+                                borderRadius: BorderRadius.circular(12),
+                                child: Image.file(
+                                  _pickedImage!,
+                                  width: double.infinity,
+                                  height: double.infinity,
+                                  fit: BoxFit.cover,
+                                ),
                               ),
-                            )
-                            // sinon on affiche l'image sélectionnée, couvrant tout l'espace
-                            : ClipRRect(
-                              borderRadius: BorderRadius.circular(12),
-                              child: Image.file(
-                                _pickedImage!,
-                                width: double.infinity,
-                                height: double.infinity,
-                                fit: BoxFit.cover,
-                              ),
-                            ),
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(height: 20),
-
-              // Question input container
-              Container(
-                decoration: BoxDecoration(
-                  border: Border.all(color: mainColor, width: 2),
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                padding: const EdgeInsets.all(12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Ajouter Votre question',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    TextFormField(
-                      controller: _questionController,
-                      maxLines: 6,
-                      decoration: InputDecoration(
-                        hintText: 'Ecriez votre question...',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide.none,
-                        ),
-                        filled: true,
-                        fillColor: Colors.white,
-                        contentPadding: const EdgeInsets.symmetric(
-                          vertical: 12,
-                          horizontal: 12,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Spacer(),
-
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: _isLoading ? null : _submitQuestion,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: mainColor,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(30),
-                    ),
-                    padding: const EdgeInsets.symmetric(vertical: 16),
+                const SizedBox(height: 20),
+            
+                // Question input container
+                Container(
+                  decoration: BoxDecoration(
+                    border: Border.all(color: mainColor, width: 2),
+                    borderRadius: BorderRadius.circular(16),
                   ),
-                  child:
-                      _isLoading
-                          ? LoadingAnimationWidget.staggeredDotsWave(
-                            color: Colors.white,
-                            size: 32,
-                          )
-                          : const Text(
-                            'Ajouter votre question',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
+                  padding: const EdgeInsets.all(12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Ajouter Votre question',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      TextFormField(
+                        controller: _questionController,
+                        maxLines: 6,
+                        decoration: InputDecoration(
+                          hintText: 'Ecriez votre question...',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide.none,
                           ),
+                          filled: true,
+                          fillColor: Colors.white,
+                          contentPadding: const EdgeInsets.symmetric(
+                            vertical: 12,
+                            horizontal: 12,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              const Gap(20),
-            ],
+                Spacer(),
+            
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: _isLoading ? null : _submitQuestion,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: mainColor,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30),
+                      ),
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                    ),
+                    child:
+                        _isLoading
+                            ? LoadingAnimationWidget.staggeredDotsWave(
+                              color: Colors.white,
+                              size: 32,
+                            )
+                            : const Text(
+                              'Ajouter votre question',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                  ),
+                ),
+                const Gap(20),
+              ],
+            ),
           ),
         ),
       ),
