@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:robotic_app/shared/colors.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../services/image_analysis_service.dart';
 import '../models/diagnostic_model.dart';
@@ -126,8 +127,13 @@ class _AnalyzeImageScreenState extends State<AnalyzeImageScreen> with TickerProv
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Analyse d\'Image - Maladie Plante'),
+      backgroundColor: Colors.white,
+       appBar: AppBar(
+        backgroundColor: Colors.white,
+        title: const Text(
+          "Analyse d'image",
+          style: TextStyle(fontWeight: FontWeight.w700, fontSize: 19),
+        ),
         centerTitle: true,
       ),
       body: SingleChildScrollView(
@@ -178,15 +184,21 @@ class _AnalyzeImageScreenState extends State<AnalyzeImageScreen> with TickerProv
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 ElevatedButton.icon(
+                  style: ButtonStyle(
+                      backgroundColor: MaterialStateProperty.all(mainColor),
+                  ),
                   onPressed: pickImageFromGallery,
-                  icon: const Icon(Icons.photo),
-                  label: const Text('Galerie'),
+                  icon: const Icon(Icons.photo,color: Colors.white,),
+                  label: const Text('Galerie', style: TextStyle(color: Colors.white),),
                 ),
                 const SizedBox(width: 16),
                 ElevatedButton.icon(
+                   style: ButtonStyle(
+                      backgroundColor: MaterialStateProperty.all(mainColor),
+                  ),
                   onPressed: takePhotoWithCamera,
-                  icon: const Icon(Icons.camera_alt),
-                  label: const Text('Caméra'),
+                  icon: const Icon(Icons.camera_alt,color: Colors.white,),
+                  label: const Text('Caméra', style: TextStyle(color: Colors.white),),
                 ),
               ],
             ),

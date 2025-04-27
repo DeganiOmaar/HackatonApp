@@ -1,4 +1,4 @@
-// ignore_for_file: deprecated_member_use
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
@@ -51,6 +51,95 @@ class _ProfileState extends State<Profile> {
     super.initState();
     getData();
   }
+
+  void _openExperienceMaterialDialog() {
+  final experienceController = TextEditingController(text: userData['experience'] ?? '');
+  final materielsController = TextEditingController(text: userData['materiels'] ?? '');
+
+  showDialog(
+    context: context,
+    builder: (context) => Dialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Center(
+                child: Text(
+                  'Modifier votre expérience',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+              TextField(
+                controller: experienceController,
+                maxLines: 3,
+                decoration: InputDecoration(
+                  labelText: 'Expérience',
+                  hintText: 'Décrivez brièvement votre expérience',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 15),
+              TextField(
+                controller: materielsController,
+                maxLines: 3,
+                decoration: InputDecoration(
+                  labelText: 'Matériels',
+                  hintText: 'Listez vos équipements',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 25),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  TextButton(
+                    style: TextButton.styleFrom(
+                      foregroundColor: Colors.red,
+                    ),
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text('Annuler'),
+                  ),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: mainColor,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    onPressed: () async {
+                      await FirebaseFirestore.instance
+                          .collection('users')
+                          .doc(FirebaseAuth.instance.currentUser!.uid)
+                          .update({
+                        'experience': experienceController.text.trim(),
+                        'materiels': materielsController.text.trim(),
+                      });
+                      Navigator.pop(context);
+                      getData();
+                    },
+                    child: const Text('Enregistrer', style: TextStyle(color: Colors.white),),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    ),
+  );
+}
 
   @override
   Widget build(BuildContext context) {
@@ -113,7 +202,6 @@ class _ProfileState extends State<Profile> {
                               "Role",
                               style: TextStyle(
                                 fontSize: 17,
-                                // fontWeight: FontWeight.w500,
                                 color: Colors.grey,
                               ),
                             ),
@@ -135,7 +223,6 @@ class _ProfileState extends State<Profile> {
                               "Email",
                               style: TextStyle(
                                 fontSize: 17,
-                                // fontWeight: FontWeight.w500,
                                 color: Colors.grey,
                               ),
                             ),
@@ -154,6 +241,12 @@ class _ProfileState extends State<Profile> {
                         Divider(thickness: 1, color: Colors.grey[200]),
                         Gap(10),
                         ProfileSettingCard(
+                          text: "Ajouter/Modifier Expérience & Matériels",
+                          icon: CupertinoIcons.add_circled,
+                          onPressed: () => _openExperienceMaterialDialog(),
+                        ),
+                        Gap(20),
+                        ProfileSettingCard(
                           text: "Modifier votre profil",
                           icon: LineAwesomeIcons.user_edit_solid,
                           onPressed: () async {
@@ -161,13 +254,11 @@ class _ProfileState extends State<Profile> {
                           },
                         ),
                         Gap(20),
-
                         ProfileSettingCard(
                           text: "Obtenir l'aide",
                           icon: CupertinoIcons.question,
                           onPressed: () {},
                         ),
-
                         Gap(20),
                         ProfileSettingCard(
                           text: "A propos de nous",
@@ -221,7 +312,6 @@ class _ProfileState extends State<Profile> {
                             child: Icon(
                               LineAwesomeIcons.angle_right_solid,
                               color: Colors.black87,
-
                               size: 18,
                             ),
                           ),

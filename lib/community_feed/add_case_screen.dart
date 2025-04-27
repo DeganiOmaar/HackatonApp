@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:uuid/uuid.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 import 'case_model.dart';
 import 'case_service.dart';
@@ -12,60 +14,117 @@ class AddCaseScreen extends StatefulWidget {
   final String userRole;
   final String userLocalisation;
 
-  const AddCaseScreen({Key? key, required this.userRole, required this.userLocalisation}) : super(key: key);
+  const AddCaseScreen({
+    Key? key,
+    required this.userRole,
+    required this.userLocalisation,
+  }) : super(key: key);
 
   @override
   State<AddCaseScreen> createState() => _AddCaseScreenState();
 }
 
 class _AddCaseScreenState extends State<AddCaseScreen> {
+  final TextEditingController _titleController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
   XFile? _pickedImage;
   bool _isLoading = false;
 
   Future<void> _pickImage() async {
     final picked = await ImagePicker().pickImage(source: ImageSource.gallery);
-    if (picked != null) {
-      setState(() => _pickedImage = picked);
-    }
+    if (picked != null) setState(() => _pickedImage = picked);
   }
 
   Future<void> _submit() async {
-    if (_pickedImage == null || _descriptionController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Veuillez ajouter une image et une description.')));
+    final title = _titleController.text.trim();
+    final desc = _descriptionController.text.trim();
+    if (_pickedImage == null || title.isEmpty || desc.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Veuillez ajouter un titre, une image et une description.',
+          ),
+        ),
+      );
       return;
     }
-
     setState(() => _isLoading = true);
-
     try {
-      final ref = FirebaseStorage.instance.ref().child('cases/${const Uuid().v4()}');
+      // Récupération de l'uid courant
+      final uid = FirebaseAuth.instance.currentUser!.uid;
+
+      // 1) upload image
+      final storageRef = FirebaseStorage.instance
+          .ref()
+          .child('cases/${const Uuid().v4()}');
       UploadTask uploadTask;
-
       if (kIsWeb) {
-        uploadTask = ref.putData(await _pickedImage!.readAsBytes());
+        uploadTask = storageRef.putData(await _pickedImage!.readAsBytes());
       } else {
-        uploadTask = ref.putFile(File(_pickedImage!.path));
+        uploadTask = storageRef.putFile(File(_pickedImage!.path));
       }
+      final snap = await uploadTask;
+      final imageUrl = await snap.ref.getDownloadURL();
 
-      final snapshot = await uploadTask;
-      final imageUrl = await snapshot.ref.getDownloadURL();
-
+      // 2) create case model
+      final caseId = const Uuid().v4();
       final newCase = CaseModel(
-        id: const Uuid().v4(),
+        id: caseId,
+        title: title,
         imageUrl: imageUrl,
-        description: _descriptionController.text.trim(),
-        role: widget.userRole.trim().toLowerCase(), // ⬆️ Force lowercase
-        localisation: widget.userLocalisation.trim().toLowerCase(), // ⬆️ Force lowercase
+        description: desc,
+        role: widget.userRole.toLowerCase(),
+        localisation: widget.userLocalisation.toLowerCase(),
         createdAt: DateTime.now(),
       );
 
-      await CaseService.addCase(newCase);
+      // 3) add to global 'cases' collection with userId
+      await FirebaseFirestore.instance
+          .collection('cases')
+          .doc(caseId)
+          .set({
+        ...newCase.toMap(),
+        'userId': uid,
+      });
+
+      // 4) add to user's subcollection 'users/{uid}/cases'
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .collection('cases')
+          .doc(caseId)
+          .set({
+        ...newCase.toMap(),
+        'userId': uid,
+      });
+
+      // 5) fetch user data
+      final userDoc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
+      final userData = userDoc.data() ?? {};
+      final nom = userData['nom'] as String? ?? '';
+      final prenom = userData['prenom'] as String? ?? '';
+
+      // 6) add notification with userId
+      await FirebaseFirestore.instance.collection('notifications').add({
+        'title': title,
+        'content': desc,
+        'date': FieldValue.serverTimestamp(),
+        'role': widget.userRole,
+        'nom': nom,
+        'prenom': prenom,
+        'userId': uid,
+        'caseId': caseId, 
+        'imageUrl': imageUrl, 
+
+
+      });
 
       if (!mounted) return;
-      Navigator.pop(context);
+      Navigator.pop(context, true);
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erreur: ${e.toString()}')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Erreur: \$e')),
+      );
     } finally {
       setState(() => _isLoading = false);
     }
@@ -76,10 +135,18 @@ class _AddCaseScreenState extends State<AddCaseScreen> {
     return Scaffold(
       appBar: AppBar(title: const Text('Partager un Cas'), centerTitle: true),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            TextField(
+              controller: _titleController,
+              decoration: InputDecoration(
+                hintText: 'Titre du cas...',
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(15)),
+              ),
+            ),
+            const SizedBox(height: 16),
             GestureDetector(
               onTap: _pickImage,
               child: Container(
@@ -96,10 +163,12 @@ class _AddCaseScreenState extends State<AddCaseScreen> {
                             ? Image.network(_pickedImage!.path, fit: BoxFit.cover)
                             : Image.file(File(_pickedImage!.path), fit: BoxFit.cover),
                       )
-                    : const Center(child: Icon(Icons.add_a_photo, size: 50, color: Colors.grey)),
+                    : const Center(
+                        child: Icon(Icons.add_a_photo, size: 50, color: Colors.grey),
+                      ),
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 16),
             TextField(
               controller: _descriptionController,
               maxLines: 5,
@@ -118,7 +187,10 @@ class _AddCaseScreenState extends State<AddCaseScreen> {
               ),
               child: _isLoading
                   ? const CircularProgressIndicator(color: Colors.white)
-                  : const Text('Partager', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  : const Text(
+                      'Partager',
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
             ),
           ],
         ),

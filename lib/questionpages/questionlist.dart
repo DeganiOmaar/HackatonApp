@@ -15,36 +15,34 @@ class QuestionsListPage extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        actions: [
-          IconButton(
-            onPressed: () async {
-              Get.to(() => AddQuestionPage());
-            },
-            icon: Icon(LineAwesomeIcons.question_circle),
-          ),
-        ],
         backgroundColor: Colors.white,
+       
         title: const Text(
-          "Liste des questions",
-          style: TextStyle(fontWeight: FontWeight.w700, fontSize: 19),
+          'Liste des questions',
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
         ),
         centerTitle: true,
+        actions: [
+          IconButton(
+            icon: const Icon(LineAwesomeIcons.question_circle, size: 28),
+            onPressed: () => Get.to(() => const AddQuestionPage()),
+          ),
+        ],
       ),
       body: StreamBuilder<QuerySnapshot>(
-        stream:
-            FirebaseFirestore.instance
-                .collection('question')
-                .orderBy('timestamp', descending: true)
-                .snapshots(),
+        stream: FirebaseFirestore.instance
+            .collection('question')
+            .orderBy('timestamp', descending: true)
+            .snapshots(),
         builder: (context, snap) {
           if (snap.hasError) {
-            return Center(child: Text('Erreur : ${snap.error}'));
+            return Center(child: Text('Erreur: \${snap.error}'));
           }
           if (!snap.hasData) {
             return Center(
               child: LoadingAnimationWidget.discreteCircle(
-                size: 32,
-                color: const Color.fromARGB(255, 16, 16, 16),
+                color: Theme.of(context).primaryColor,
+                size: 36,
                 secondRingColor: Colors.indigo,
                 thirdRingColor: Colors.pink.shade400,
               ),
@@ -52,30 +50,34 @@ class QuestionsListPage extends StatelessWidget {
           }
           final docs = snap.data!.docs;
           if (docs.isEmpty) {
-            return const Center(child: Text('Aucune question pour l’instant.'));
+            return const Center(
+              child: Text(
+                'Aucune question pour l’instant.',
+                style: TextStyle(fontSize: 16, color: Colors.black54),
+              ),
+            );
           }
 
-          return ListView.builder(
-            padding: const EdgeInsets.symmetric(vertical: 8),
+          return ListView.separated(
+            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+            separatorBuilder: (_, __) => const SizedBox(height: 12),
             itemCount: docs.length,
             itemBuilder: (context, i) {
               final doc = docs[i];
-              final q = doc.data()! as Map<String, dynamic>;
-              final userId = q['userId'] as String;
-              final questionText = q['question'] as String? ?? '';
-              final questionImageUrl = q['image'] as String? ?? '';
-              final timestamp = (q['timestamp'] as Timestamp?)?.toDate();
-              final relative =
-                  timestamp != null
-                      ? timeago.format(timestamp, locale: 'fr')
-                      : '';
+              final data = doc.data()! as Map<String, dynamic>;
+              final userId = data['userId'] as String;
+              final questionText = data['question'] as String? ?? '';
+              final imageUrl = data['image'] as String? ?? '';
+              final timestamp = (data['timestamp'] as Timestamp?)?.toDate();
+              final relative = timestamp != null
+                  ? timeago.format(timestamp, locale: 'fr')
+                  : '';
 
-              return FutureBuilder<DocumentSnapshot<Map<String, dynamic>>>(
-                future:
-                    FirebaseFirestore.instance
-                        .collection('users')
-                        .doc(userId)
-                        .get(),
+              return FutureBuilder<DocumentSnapshot>(
+                future: FirebaseFirestore.instance
+                    .collection('users')
+                    .doc(userId)
+                    .get(),
                 builder: (context, userSnap) {
                   if (userSnap.connectionState == ConnectionState.waiting) {
                     return const SizedBox(
@@ -89,87 +91,92 @@ class QuestionsListPage extends StatelessWidget {
                       child: Center(child: Text('Utilisateur introuvable')),
                     );
                   }
-                  final user = userSnap.data!.data()!;
+                  final user = userSnap.data!.data() as Map<String, dynamic>;
                   final displayName = '${user['nom']} ${user['prenom']}';
                   final avatarUrl = user['image'] as String? ?? '';
 
-                  return GestureDetector(
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder:
-                              (_) => ResponsePage(
-                                questionId: doc.id,
-                                questionData: q,
-                              ),
-                        ),
-                      );
-                    },
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 8,
-                      ),
+                  return Card(
+                    elevation: 2,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(16),
+                      onTap: () {
+                        Get.to(() => ResponsePage(
+                              questionId: doc.id,
+                              questionData: data,
+                            ));
+                      },
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // En-tête : avatar, nom, relatif
-                          Row(
-                            children: [
-                              CircleAvatar(
-                                radius: 24,
-                                backgroundImage:
-                                    avatarUrl.isNotEmpty
-                                        ? NetworkImage(avatarUrl)
-                                        : const AssetImage(
-                                              'assets/img/avtr.svg',
-                                            )
-                                            as ImageProvider,
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Text(
-                                  displayName,
-                                  style: const TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w600,
+                          // Header
+                          Padding(
+                            padding: const EdgeInsets.all(12.0),
+                            child: Row(
+                              children: [
+                                CircleAvatar(
+                                  radius: 24,
+                                  backgroundImage: avatarUrl.isNotEmpty
+                                      ? NetworkImage(avatarUrl)
+                                      : null,
+                                  backgroundColor: Colors.grey[300],
+                                  child: avatarUrl.isEmpty
+                                      ? const Icon(
+                                          Icons.person,
+                                          color: Colors.white,
+                                        )
+                                      : null,
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Text(
+                                    displayName,
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
+                                    ),
                                   ),
                                 ),
-                              ),
-                              if (relative.isNotEmpty)
-                                Text(
-                                  relative,
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: Colors.grey[600],
+                                if (relative.isNotEmpty)
+                                  Chip(
+                                    label: Text(relative),
+                                    backgroundColor: Colors.grey[200],
                                   ),
-                                ),
-                            ],
+                              ],
+                            ),
                           ),
-
-                          const SizedBox(height: 16),
-
-                          // Image de la question
-                          if (questionImageUrl.isNotEmpty)
+                          // Image
+                          if (imageUrl.isNotEmpty) ...[
                             ClipRRect(
-                              borderRadius: BorderRadius.circular(12),
+                              borderRadius: const BorderRadius.vertical(
+                                  top: Radius.circular(0),
+                                  bottom: Radius.circular(12)),
                               child: Image.network(
-                                questionImageUrl,
+                                imageUrl,
                                 width: double.infinity,
-                                height: 220,
+                                height: 180,
                                 fit: BoxFit.cover,
                               ),
                             ),
-
-                          if (questionImageUrl.isNotEmpty)
-                            const SizedBox(height: 12),
-
-                          // Texte de la question
-                          Text(
-                            questionText,
-                            style: const TextStyle(fontSize: 14, height: 1.4),
+                            const SizedBox(height: 8),
+                          ],
+                          // Question text
+                          Padding(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 8),
+                            child: Text(
+                              questionText,
+                              style: const TextStyle(
+                                fontSize: 14,
+                                height: 1.5,
+                              ),
+                            ),
                           ),
+                          // Footer: see responses icon
+                        
+                          const SizedBox(height: 8),
                         ],
                       ),
                     ),

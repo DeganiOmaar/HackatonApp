@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
@@ -107,6 +108,7 @@ class _RegisterPageState extends State<RegisterPage> {
         email: emailController.text.trim(),
         password: passwordController.text,
       );
+      final fcmTooken = await FirebaseMessaging.instance.getToken();
       final imgUrl = await uploadImage();
 
       await FirebaseFirestore.instance
@@ -123,6 +125,7 @@ class _RegisterPageState extends State<RegisterPage> {
         'role': selectedRole,
         'experience': '',
         'materiels': '',
+        //'token' : fcmTooken,
       });
 
       if (!mounted) return;
