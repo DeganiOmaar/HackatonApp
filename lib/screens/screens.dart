@@ -6,15 +6,9 @@ import 'package:google_nav_bar/google_nav_bar.dart';
 import 'package:line_awesome_flutter/line_awesome_flutter.dart';
 import 'package:robotic_app/analyse_maladie/screens/analyze_image_screen.dart';
 import 'package:robotic_app/community_feed/community_feed_screen.dart';
-import 'package:robotic_app/messagesscreens/listuser.dart';
-import 'package:robotic_app/notificationpage/notifications.dart';
-import 'package:robotic_app/questionpages/addquestion.dart';
 import 'package:robotic_app/questionpages/questionlist.dart';
 import 'package:robotic_app/recherche_agriculteur/search_agriculteur_screen.dart';
-import 'package:robotic_app/screens/home_page.dart';
 import 'package:robotic_app/shared/colors.dart';
-
-import '../chatbot/chatbot.dart';
 import '../profilepages/profile.dart';
 
 class Screens extends StatefulWidget {

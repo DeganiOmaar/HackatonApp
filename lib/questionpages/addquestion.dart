@@ -190,8 +190,8 @@ class _AddQuestionPageState extends State<AddQuestionPage> {
                     ],
                   ),
                 ),
-                Spacer(),
-            
+                //Spacer(),
+              SizedBox(height: 50 ,),
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(

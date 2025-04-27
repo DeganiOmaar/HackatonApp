@@ -7,9 +7,7 @@ import 'package:uuid/uuid.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:geocoding/geocoding.dart';
-
 import 'case_model.dart';
-import 'case_service.dart';
 
 class AddCaseScreen extends StatefulWidget {
   final String userRole;

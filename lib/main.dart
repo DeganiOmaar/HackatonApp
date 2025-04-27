@@ -1,17 +1,10 @@
 
 
-import 'dart:convert';
-
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:robotic_app/describepages/first.dart';
-import 'package:robotic_app/profilepages/profile.dart';
-import 'package:robotic_app/screens/home_page.dart';
 import 'package:robotic_app/screens/screens.dart';
-import 'package:robotic_app/testpage.dart';
 import 'firebase_options.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'registerScreens/login.dart';

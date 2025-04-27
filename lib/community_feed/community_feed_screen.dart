@@ -6,7 +6,6 @@ import 'package:robotic_app/community_feed/add_case_screen.dart';
 import 'package:robotic_app/community_feed/case_model.dart';
 import 'package:robotic_app/community_feed/case_service.dart';
 import 'package:robotic_app/community_feed/statisticpage.dart';
-import 'package:robotic_app/map_view_screen.dart';
 import 'package:robotic_app/open_native_map.dart';   // <-- nouvelle page
 
 class CommunityFeedScreen extends StatefulWidget {
